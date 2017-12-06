@@ -39,8 +39,14 @@ class MobilerSpider(scrapy.Spider):
 
     def closed(self, spider):       
         #sort scraped phones by 1) brand and 2) price
+        def phone_sorter(phone):
+            if phone["price"] == None:
+                return (phone["brand"], 0)
+            else:
+                return (phone["brand"], phone["price"])
         self.phones = sorted(self.phones, 
-                             key = lambda k: (k["brand"], k["price"]))
+                             key = phone_sorter)
+                             #key = lambda k: (k["brand"], k["price"]))
         df = pd.DataFrame(self.phones)
         d1 = dict(selector="th", props=[('text-align', 'left')])
         d2 = dict(selector="style", props=[('text-align', 'left')])
@@ -136,7 +142,7 @@ class MobilerSpider(scrapy.Spider):
         except ValueError:
             brand = response.xpath(
                     "//div[@class='product-overview ng-scope']//h3/text()").extract_first()
-            storage = "UNKNOWN"
+            storage = None
         model=response.xpath(
                 "//div[@class='product-overview ng-scope']//h1/text()").extract_first()
         try:
@@ -146,7 +152,7 @@ class MobilerSpider(scrapy.Spider):
             price=int(''.join(filter(str.isdigit, price_string)))
         except TypeError:
             #price = "<UNKNOWN>"
-            price = 0
+            price = None
         mobile={"brand": brand, 
                 "storage": storage, 
                 "model": model, 
