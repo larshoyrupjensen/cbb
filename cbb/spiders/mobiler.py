@@ -12,7 +12,8 @@ import json
 import datetime
 import pandas as pd
 
-locale.setlocale(locale.LC_ALL, 'Danish')
+#This doesn't work on Linux, so disabled
+#locale.setlocale(locale.LC_ALL, 'Danish')
 print(os.path.abspath(os.path.curdir))
 
 
@@ -157,7 +158,7 @@ class MobilerSpider(scrapy.Spider):
                 "storage": storage, 
                 "model": model, 
                 "price": price,
-                "timestamp": self.timestamp}
+                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         self.logger.info(
                 "\n\nBrand: {0}, Model:{1}, Storage:{2}, Price:{3}, Timestamp:{4}\n".format(brand, model, storage, price, self.timestamp))
         self.phones.append(mobile)

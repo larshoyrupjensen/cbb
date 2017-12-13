@@ -75,7 +75,10 @@ def find_changed_phones(new_phones, all_phones):
         else:
             next_newest=old_sorted[0]
         #Check if price has changed
-        delta=n["price"]-next_newest["price"]
+        try:
+            delta=n["price"]-next_newest["price"]
+        except TypeError:
+            delta = 0
         if delta != 0:
             n["delta"]=delta
             n["old_price"]=next_newest["price"]
