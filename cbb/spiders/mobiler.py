@@ -20,7 +20,7 @@ print(os.path.abspath(os.path.curdir))
 class MobilerSpider(scrapy.Spider):
     name = 'mobiler'
     allowed_domains = ['cbb.dk']
-    start_urls = ['http://cbb.dk/']
+    start_urls = ['https://www.cbb.dk/']
     timestamp=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     phones=[]
 
@@ -44,7 +44,7 @@ class MobilerSpider(scrapy.Spider):
             if phone["price"] == None:
                 return (phone["brand"], 0)
             else:
-                return (phone["brand"], phone["price"])
+                return (phone["brand"], phone["model"], phone["price"])
         self.phones = sorted(self.phones, 
                              key = phone_sorter)
                              #key = lambda k: (k["brand"], k["price"]))
@@ -115,7 +115,7 @@ class MobilerSpider(scrapy.Spider):
         script = """
         function main(splash, args)
           assert(splash:go(args.url))
-          assert(splash:wait(12.5))
+          assert(splash:wait(2))
           return {
             html = splash:html()
           }
@@ -123,28 +123,27 @@ class MobilerSpider(scrapy.Spider):
         """
         for phone in response.xpath("//button[@ng-href]"):
             #print(phone.xpath("@ng-href").extract_first())
-            next_page=(response.urljoin(phone.xpath("@ng-href").extract_first()))
-            self.logger.info(next_page)
-            yield SplashRequest(url=next_page, 
+            phone_page=(response.urljoin(phone.xpath("@ng-href").extract_first()))
+            self.logger.info(phone_page)
+            yield SplashRequest(url=phone_page, 
                                 callback=self.parse_single_mobile, 
                                 endpoint="execute",
                                 args={"lua_source": script})
 
     def parse_single_mobile(self, response):
         brand, storage, model, price = None, None, None, None
+        phone_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         #if "iphone-6s" in response.url.lower():
         #    inspect_response(response, self)
         #if response.xpath(
         #        "//div[@class='product-overview ng-scope']//h1/text()")\
         #        .extract_first() == "Mate 10 Lite":
         #            inspect_response(response, self)
-        try:
-            brand, storage=response.xpath(
-                    "//div[@class='product-overview ng-scope']//h3/text()").extract()
-        except ValueError:
-            brand = response.xpath(
-                    "//div[@class='product-overview ng-scope']//h3/text()").extract_first()
-            storage = None
+        brand = response.xpath(
+                "//div[@class='product-overview ng-scope']//h3/text()").extract_first()
+        storage = response.xpath(
+            '//*[@id="menufication-page-holder"]/div[1]/div/div/div[5]/div/div/div/div[2]/div[1]/div/h3/text()'
+            ).extract_first()
         model=response.xpath(
                 "//div[@class='product-overview ng-scope']//h1/text()").extract_first()
         try:
@@ -159,9 +158,9 @@ class MobilerSpider(scrapy.Spider):
                 "storage": storage, 
                 "model": model, 
                 "price": price,
-                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+                "timestamp": phone_timestamp}
         self.logger.info(
-                "\n\nBrand: {0}, Model:{1}, Storage:{2}, Price:{3}, Timestamp:{4}\n".format(brand, model, storage, price, self.timestamp))
+                "\n\nBrand: {0}, Model:{1}, Storage:{2}, Price:{3}, Timestamp:{4}\n".format(brand, model, storage, price, phone_timestamp))
         self.phones.append(mobile)
 
 def load_phones():
@@ -304,3 +303,6 @@ function show_more(splash, element)
   splash:wait(2)
 end  
 """
+
+#Possible Xpath to find storage for all phones (including Doro)
+#//*[@id="menufication-page-holder"]/div[1]/div/div/div[5]/div/div/div/div[2]/div[1]/div/h3/text()
