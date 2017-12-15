@@ -131,6 +131,7 @@ class MobilerSpider(scrapy.Spider):
                                 args={"lua_source": script})
 
     def parse_single_mobile(self, response):
+        brand, storage, model, price = None, None, None, None
         #if "iphone-6s" in response.url.lower():
         #    inspect_response(response, self)
         #if response.xpath(
