@@ -8,7 +8,6 @@ import datetime
 import pandas as pd
 
 
-
 class MobilerSpider(scrapy.Spider):
     name = 'mobiler'
     allowed_domains = ['cbb.dk']
