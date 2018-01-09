@@ -89,9 +89,10 @@ class MobilerSpider(scrapy.Spider):
             end  
         """
         #Now let's find URL for page with mobile phones for sale
-        ng_click = response.xpath("//a[@data-name='Mobiltelefoner']\
-                                  [@data-category='topmenu']\
-                                  [@class='tracking_link_topmenu']/@ng-click")\
+        ng_click = response.xpath("//a[@data-name='Mobiltelefoner']"
+                                  "[@data-category='topmenu']"
+                                  "[@class='search-input--active "
+                                  "tracking_link_topmenu']/@ng-click")\
                                   .extract_first()
         mobiler_url = response.urljoin(ng_click.split("'")[1])
         self.logger.info(mobiler_url)
@@ -126,17 +127,18 @@ class MobilerSpider(scrapy.Spider):
         #Strip relevant data for each phone
         phone_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         brand = response.xpath(
-                "//div[@class='product-overview ng-scope']//h3/text()")\
+                '//*[@id="menufication-page-holder"]/'
+                'div[1]/div/div[1]/h3//text()')\
                 .extract_first()
         #The crazy Xpath selector below is found in Chrome Dev Tools
-        storage = response.xpath('//*[@id="menufication-page-holder"]\
-                                 /div[1]/div/div/div[5]/div/div/div/div[2]\
-                                 /div[1]/div/h3/text()')\
-                                 .extract_first()
-        model=response.xpath("//div[@class='product-overview ng-scope']\
-                             //h1/text()").extract_first()
+        storage = response.xpath(
+                '//*[@id="menufication-page-holder"]/div[1]/div/div[3]/div/'
+                'div[2]/div[1]//text()').extract_first()
+        model=response.xpath('//*[@id="menufication-page-holder"]/'
+                             'div[1]/div/div[1]/h1//text()').extract_first()
         price_string=unicodedata.normalize("NFKD", response.xpath(
-                "//text()[contains(.,'Telefonens pris')]").extract_first())
+                '//*[@id="menufication-page-holder"]/div[1]/div/div[3]/div/'
+                'div[8]/div[2]/div/div[2]/text()').extract_first())
         price = int(''.join(filter(str.isdigit, price_string)))
         mobile = {"brand": brand, 
                   "storage": storage, 
