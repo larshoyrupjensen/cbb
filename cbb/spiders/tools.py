@@ -86,11 +86,9 @@ def find_changed_phones(new_phones, all_phones):
             n["old_price"]=next_newest["price"]
             changed_phones_since_last_run.append(n)
     return changed_phones_since_last_run
-
             
 def phone_sorter(phone):
     return (phone["brand"], phone["model"], phone["price"])
-
 
 def load_phones():
     JSON_FILE="scraped_cbb_phones.json"
