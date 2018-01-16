@@ -10,6 +10,7 @@ Classes and functions to find necessary information in phone history
 import json
 import datetime
 import os
+from cbb.spiders.tools import normalise_unicode
 
 
 print(f"Current dir: {os.path.abspath(os.path.curdir)}")
@@ -49,10 +50,10 @@ class PhoneModel:
     def set_price_changes(self):
         for i in range(len(self.phone_data) - 1):
             t = self.phone_data[i + 1].timestamp
-            d = self.phone_data[i + 1].price - self.phone_data[i].price
-            if d != 0:
-                self.price_changes.append({t: d})
-                print(self.phone_data[i + 1], {t: d}) 
+            delta = self.phone_data[i + 1].price - self.phone_data[i].price
+            if delta != 0:
+                self.price_changes.append({t: delta})
+                #print(self.phone_data[i + 1], {t: delta}) 
     
     def set_status_and_dates(self):
         #Check if latest scrape of this model is in latest scrape of all models
@@ -89,6 +90,8 @@ class PhoneModel:
     
 with open(JSON_FILE, "r") as fp:
     phone_dicts = json.loads(fp.read())
+    
+
 
 filtered_phone_dicts = [pd for pd in phone_dicts if \
             datetime.datetime.strptime(pd["timestamp"], "%Y-%m-%d %H:%M:%S")\
@@ -109,4 +112,5 @@ for phone_dict in filtered_phone_dicts:
 
 for pm in phone_models.values():
     pm.finalise_model()
+    print(pm)
 

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy_splash import SplashRequest
-import unicodedata
-from .send_email import send_email
-from .tools import find_changed_phones, phone_sorter, load_phones, save_phones
+from cbb.spiders.send_email import send_email
+from cbb.spiders.tools import find_changed_phones, phone_sorter, load_phones, save_phones
+from cbb.spiders.tools import normalise_unicode
 import datetime
 import pandas as pd
 
@@ -135,7 +135,7 @@ class MobilerSpider(scrapy.Spider):
                                  .extract_first()
         model=response.xpath("//div[@class='product-overview ng-scope']\
                              //h1/text()").extract_first()
-        price_string=unicodedata.normalize("NFKD", response.xpath(
+        price_string=normalise_unicode(response.xpath(
                 "//text()[contains(.,'Telefonens pris')]").extract_first())
         price = int(''.join(filter(str.isdigit, price_string)))
         mobile = {"brand": brand, 

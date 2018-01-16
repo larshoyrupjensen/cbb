@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import unicodedata
 
 """
 Created on Sun Nov 19 19:04:08 2017
@@ -105,4 +106,5 @@ def save_phones(phones):
     with open(JSON_FILE, "w") as fp:
         json.dump(phones, fp)
         
-        
+def normalise_unicode(text):
+    return unicodedata.normalize("NFKD", text)
