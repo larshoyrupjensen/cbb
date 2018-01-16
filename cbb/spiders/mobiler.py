@@ -131,25 +131,19 @@ class MobilerSpider(scrapy.Spider):
                 'div[1]/div/div[1]/h3//text()')\
                 .extract_first()
         #The crazy Xpath selector below is found in Chrome Dev Tools
-<<<<<<< HEAD
-        storage = response.xpath('//*[@id="menufication-page-holder"]\
-                                 /div[1]/div/div/div[5]/div/div/div/div[2]\
-                                 /div[1]/div/h3/text()')\
-                                 .extract_first()
         model=response.xpath("//div[@class='product-overview ng-scope']\
                              //h1/text()").extract_first()
         price_string=normalise_unicode(response.xpath(
                 "//text()[contains(.,'Telefonens pris')]").extract_first())
-=======
+
         storage = response.xpath(
                 '//*[@id="menufication-page-holder"]/div[1]/div/div[3]/div/'
                 'div[2]/div[1]//text()').extract_first()
         model=response.xpath('//*[@id="menufication-page-holder"]/'
                              'div[1]/div/div[1]/h1//text()').extract_first()
-        price_string=unicodedata.normalize("NFKD", response.xpath(
+        price_string=normalise_unicode(response.xpath(
                 '//*[@id="menufication-page-holder"]/div[1]/div/div[3]/div/'
                 'div[8]/div[2]/div/div[2]/text()').extract_first())
->>>>>>> issue1
         price = int(''.join(filter(str.isdigit, price_string)))
         mobile = {"brand": brand, 
                   "storage": storage, 
