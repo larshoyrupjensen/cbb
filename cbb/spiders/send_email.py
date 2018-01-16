@@ -1,4 +1,4 @@
-# Sends email message through Googles smtp.gmail.com using Lars' account
+# Sends email message through Google's smtp.gmail.com using Lars' account
 # Note that an App Password is used
 
 import smtplib
