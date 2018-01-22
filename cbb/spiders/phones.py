@@ -9,21 +9,17 @@ Classes and functions to find necessary information in phone history
 
 import json
 import datetime
-import os
 from cbb.spiders.tools import normalise_unicode
 
 
-print(f"Current dir: {os.path.abspath(os.path.curdir)}")
 JSON_FILE= "scraped_cbb_phones.json"
 START_DATE = datetime.datetime(year=2017, month=12, day=16)
-phone_models = {}
 
 class PhoneData:
-    
     def __init__(self, phone_dict):
-        self.brand = phone_dict["brand"]
-        self.model = phone_dict["model"]
-        self.storage = phone_dict["storage"]
+        self.brand = normalise_unicode(phone_dict["brand"])
+        self.model = normalise_unicode(phone_dict["model"])
+        self.storage = normalise_unicode(phone_dict["storage"])
         self.price = phone_dict["price"]
         self.timestamp = phone_dict["timestamp"]
         self.id = (self.brand, self.model, self.storage)
@@ -34,11 +30,16 @@ class PhoneData:
     
 
 class PhoneModel:
+    #Represents one unique phone model
+    #Holds data about all scraped "instances" of this phone on cbb.dk
     scraped_dates = []
     
     def __init__(self, phone_data):
         self.id = phone_data.id
-        self.phone_data = []
+        self.brand = phone_data.brand
+        self.model = phone_data.model
+        self.storage = phone_data.storage
+        self.phone_data = [phone_data,]
         self.is_active = None
         self.start_date = None
         self.end_date = None
@@ -48,12 +49,15 @@ class PhoneModel:
         self.phone_data.append(phone_data)
     
     def set_price_changes(self):
+        #Finds all price changes
+        #First, sort self.phone_data by date
+        self.phone_data.sort(key=lambda x: x.timestamp)
+        #Now, find all price changes and append to self.price_changes
         for i in range(len(self.phone_data) - 1):
             t = self.phone_data[i + 1].timestamp
             delta = self.phone_data[i + 1].price - self.phone_data[i].price
             if delta != 0:
                 self.price_changes.append({t: delta})
-                #print(self.phone_data[i + 1], {t: delta}) 
     
     def set_status_and_dates(self):
         #Check if latest scrape of this model is in latest scrape of all models
@@ -79,38 +83,88 @@ class PhoneModel:
             self.is_active = False
             self.end_date = model_datetimes_sorted[-1]
     
-    def finalise_model(self):
+    def set_price(self):
+        #Finds most recent price and sets it as phone's price
+        self.price = sorted(
+                self.phone_data, 
+                key=lambda x: x.timestamp
+                )[-1].price
+    
+    def finalize_model(self):
         self.set_price_changes()
         self.set_status_and_dates()
+        self.set_price()
+    
+    def to_dicts(self):
+        #Returns state of object in a dict for use in pandas HTML table
+        return {"Brand": self.brand,
+                "Model": self.model,
+                "Storage": self.storage,
+                "Price": self.price,
+                "Active": self.is_active,
+                "Entered list": str(self.start_date),
+                "Exited list": str(self.end_date),
+                "Latest price change": self.price_changes
+                }
     
     def __repr__(self):
         return (f"{self.id}\n"
                 f"start_date: {self.start_date}, \n"
                 f"end_date: {self.end_date}\n")
-    
-with open(JSON_FILE, "r") as fp:
-    phone_dicts = json.loads(fp.read())
-    
+
+def hello_world():
+    print("Hello world")
 
 
-filtered_phone_dicts = [pd for pd in phone_dicts if \
-            datetime.datetime.strptime(pd["timestamp"], "%Y-%m-%d %H:%M:%S")\
-            > START_DATE]
+class PhoneAnalyzer():
+    def __init__(self, file, start_date):
+        #This dictionary will hold all unique phone models
+        self.phone_models = {}
+        #Load all previously scraped phone data
+        with open(file, "r") as fp:
+            phone_dicts = json.loads(fp.read())
+        filtered_phone_dicts = [pd for pd in phone_dicts if \
+                    datetime.datetime.strptime(pd["timestamp"], "%Y-%m-%d %H:%M:%S")\
+                    > start_date]
+        for phone_dict in filtered_phone_dicts:
+            # Build list of all scraped datetimes
+            PhoneModel.scraped_dates.append(
+                    datetime.datetime.strptime(phone_dict["timestamp"],
+                                                          "%Y-%m-%d %H:%M:%S"))
+            #Add phone_data to relevant model instance if it exists. Otherwise create
+            phone_data = PhoneData(phone_dict)
+            if phone_data.id in self.phone_models:
+                self.phone_models[phone_data.id].add_phone(phone_data)
+            else:
+                phone_model = PhoneModel(phone_data)
+                self.phone_models[phone_data.id] = phone_model
+        #finalize all models in order to set variables
+        for pm in self.phone_models.values():
+            pm.finalize_model()
 
-for phone_dict in filtered_phone_dicts:
-    # Build list of all scraped datetimes
-    PhoneModel.scraped_dates.append(
-            datetime.datetime.strptime(phone_dict["timestamp"],
-                                                  "%Y-%m-%d %H:%M:%S"))
-    #Add phone_data to relevant model object if it exists. Otherwise create
-    phone_data = PhoneData(phone_dict)
-    if phone_data.id in phone_models:
-        phone_models[phone_data.id].add_phone(phone_data)
-    else:
-        phone_model = PhoneModel(phone_data)
-        phone_models[phone_data.id] = phone_model
+    def get_sorted_list_of_dicts(self):
+        list_of_dicts = []
+        for pm in self.phone_models.values():
+            list_of_dicts.append(pm.to_dicts())
+        pre_sorted = sorted(list_of_dicts, key=lambda x: (
+                                                    x["Brand"],
+                                                    x["Model"],
+                                                    x["Price"],
+                                                    ))
+        return sorted(pre_sorted, key=lambda x: x["Active"], reverse=True)
+        
+    def get_ordered_columns(self):
+        return [
+                "Brand",
+                "Model",
+                "Storage",
+                "Price",
+                "Active",
+                "Entered list",
+                "Exited list",
+                "Latest price change",
+                ]
 
-for pm in phone_models.values():
-    pm.finalise_model()
-    print(pm)
-
+if __name__ == "__main__":
+    pa = PhoneAnalyzer(JSON_FILE, START_DATE)
+    l = pa.get_sorted_list_of_dicts()
