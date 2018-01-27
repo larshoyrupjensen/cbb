@@ -60,8 +60,36 @@ class MobilerSpider(scrapy.Spider):
         df = pd.DataFrame(dicts_for_pandas)
         df = df[ordered_columns]
         df.index = df.index + 1
-        html_table = df.to_html(border=0)
-        #html_table = df.style.render()
+
+        #Let's do some styling of the table
+        styles = [
+                dict(selector="th, td", props=[
+                        ("font-family", "Verdana"),
+                        ("font-size", "small"),
+                        ("font-weight", "normal"),
+                        ("text-align", "left"),
+                        #("background-color", "purple"),
+                        #("column-gap", "0px"),
+                        #("column-rule", "0px"),                    
+                        ]),
+                dict(selector="table", props=[
+                        ("border", "10px solid black"),                    
+                        ]),
+                dict(selector="th", props=[
+                        ("font-weight", "bold"),
+                        ("background-color", "orange"),
+                        ],),
+                dict(selector=".row_heading", props=[
+                        ("font-weight", "normal"),
+                        ("background-color", "transparent"),
+                        ],),
+                ]
+        html_table = "<html>"
+        html_table += df.style.set_table_styles(styles).render()
+        html_table = html_table.replace("<style", "<head><style")
+        html_table = html_table.replace("</style>", "</style></head>")
+        html_table += "</html>"
+
         #Send html table as email
         send_email(
                 content=html_table, 

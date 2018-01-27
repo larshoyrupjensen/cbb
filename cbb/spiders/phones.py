@@ -9,8 +9,9 @@ Classes and functions to find necessary information in phone history
 
 import json
 import datetime
+import pandas as pd
 from cbb.spiders.tools import normalise_unicode
-
+import cbb.spiders.send_email
 
 JSON_FILE= "scraped_cbb_phones.json"
 START_DATE = datetime.datetime(year=2017, month=12, day=16)
@@ -167,4 +168,48 @@ class PhoneAnalyzer():
 
 if __name__ == "__main__":
     pa = PhoneAnalyzer(JSON_FILE, START_DATE)
-    l = pa.get_sorted_list_of_dicts()
+    dicts_for_pandas = pa.get_sorted_list_of_dicts()
+    ordered_columns = pa.get_ordered_columns()
+    df = pd.DataFrame(dicts_for_pandas)
+    df = df[ordered_columns]
+    df.index = df.index + 1
+
+    #Let's do some styling of the table
+    styles = [
+            dict(selector="th, td", props=[
+                    ("font-family", "Verdana"),
+                    ("font-size", "small"),
+                    ("font-weight", "normal"),
+                    ("text-align", "left"),
+                    #("background-color", "purple"),
+                    #("column-gap", "0px"),
+                    #("column-rule", "0px"),                    
+                    ]),
+            dict(selector="table", props=[
+                    ("border", "10px solid black"),                    
+                    ]),
+            dict(selector="th", props=[
+                    ("font-weight", "bold"),
+                    ("background-color", "orange"),
+                    ],),
+            dict(selector=".row_heading", props=[
+                    ("font-weight", "normal"),
+                    ("background-color", "transparent"),
+                    ],),
+            ]
+    html_table = "<html>"
+    html_table += df.style.set_table_styles(styles).render()
+    html_table = html_table.replace("<style", "<head><style")
+    html_table = html_table.replace("</style>", "</style></head>")
+    html_table += "</html>"
+    with open("html_table.html", "w") as fp:
+        fp.write(html_table)
+    #html_table = df.to_html(border=0)
+    #html_table = df.style.render()
+    #Send html table as email
+    #with open("html_table_edited.html", "r") as fp:
+    #    html_table = fp.read()
+#    cbb.spiders.send_email.send_email(
+#            content=html_table, 
+#            recipient="lars.hoyrup.jensen@gmail.com",
+#            subject=f"CBB spider kørt TEST")
