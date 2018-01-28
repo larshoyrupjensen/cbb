@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import json
-import unicodedata
 
 """
 Created on Sun Nov 19 19:04:08 2017
@@ -55,41 +54,41 @@ new=[{'brand': 'Huawei',
   'timestamp': '2019-11-18 08:41:02'}]
 
 
-#def find_changed_phones(new_phones, all_phones):
-#    changed_phones_since_last_run=[]
-#    for n in new_phones:
-#        old_versions=[p for p in all_phones if
-#                      p["brand"]==n["brand"] and
-#                      p["model"]==n["model"] and
-#                      p["storage"]==n["storage"]]
-#        #If n is phone that has never been scraped before there are no old
-#        #versions and we should continue to next new phone
-#        if old_versions == []:
-#            continue
-#        old_sorted=sorted(old_versions, 
-#                          key=lambda k: k["timestamp"], 
-#                          reverse=True)
-#        #print("NEW", n)
-#        #print("OLD SORTED", old_sorted)
-#        #If new phones have been saved to all phones, pick next newest as
-#        #comparison phone. Should not be necessary
-#        if n["timestamp"]==old_sorted[0]["timestamp"]:
-#            next_newest=old_sorted[-1]
-#        else:
-#            next_newest=old_sorted[0]
-#        #Check if price has changed
-#        try:
-#            delta=n["price"]-next_newest["price"]
-#        except TypeError:
-#            delta = 0
-#        if delta != 0:
-#            n["delta"]=delta
-#            n["old_price"]=next_newest["price"]
-#            changed_phones_since_last_run.append(n)
-#    return changed_phones_since_last_run
+def find_changed_phones(new_phones, all_phones):
+    changed_phones_since_last_run=[]
+    for n in new_phones:
+        old_versions=[p for p in all_phones if
+                      p["brand"]==n["brand"] and
+                      p["model"]==n["model"] and
+                      p["storage"]==n["storage"]]
+        #If n is phone that has never been scraped before there are no old
+        #versions and we should continue to next new phone
+        if old_versions == []:
+            continue
+        old_sorted=sorted(old_versions, 
+                          key=lambda k: k["timestamp"], 
+                          reverse=True)
+        #print("NEW", n)
+        #print("OLD SORTED", old_sorted)
+        #If new phones have been saved to all phones, pick next newest as
+        #comparison phone. Should not be necessary
+        if n["timestamp"]==old_sorted[0]["timestamp"]:
+            next_newest=old_sorted[-1]
+        else:
+            next_newest=old_sorted[0]
+        #Check if price has changed
+        try:
+            delta=n["price"]-next_newest["price"]
+        except TypeError:
+            delta = 0
+        if delta != 0:
+            n["delta"]=delta
+            n["old_price"]=next_newest["price"]
+            changed_phones_since_last_run.append(n)
+    return changed_phones_since_last_run
             
-#def phone_sorter(phone):
-#    return (phone["brand"], phone["model"], phone["price"])
+def phone_sorter(phone):
+    return (phone["brand"], phone["model"], phone["price"])
 
 def load_phones():
     JSON_FILE="scraped_cbb_phones.json"
@@ -106,8 +105,4 @@ def save_phones(phones):
     with open(JSON_FILE, "w") as fp:
         json.dump(phones, fp)
         
-def normalise_unicode(text):
-    if text is None:
-        return text
-    else:
-        return unicodedata.normalize("NFKD", text)
+        
