@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy_splash import SplashRequest
-import unicodedata
-from .send_email import send_email
-from .tools import find_changed_phones, phone_sorter, load_phones, save_phones
+from cbb.spiders.send_email import send_email
+from cbb.spiders.tools import load_phones, save_phones
+from cbb.spiders.tools import normalise_unicode
+from cbb.spiders.phones import PhoneAnalyzer
 import datetime
 import pandas as pd
+import unicodedata
+
+JSON_FILE= "scraped_cbb_phones.json"
+START_DATE = datetime.datetime(year=2017, month=12, day=16)
 
 
 class MobilerSpider(scrapy.Spider):
@@ -31,31 +36,68 @@ class MobilerSpider(scrapy.Spider):
 
     def closed(self, spider):       
         #On shutdown, sort scraped phones by 1) brand, 2) model and 3) price
-        self.phones = sorted(self.phones, 
-                             key = phone_sorter)
+        #self.phones = sorted(self.phones, 
+        #                     key = phone_sorter)
 
-        df = pd.DataFrame(self.phones)
-        d1 = dict(selector="th", props=[('text-align', 'left')])
-        d2 = dict(selector="style", props=[('text-align', 'left')])
-        df.index = df.index + 1
-        new_phones_as_html = df.style.set_table_styles([d1, d2])\
-            .render()
+        #df = pd.DataFrame(self.phones)
+        #d1 = dict(selector="th", props=[('text-align', 'left')])
+        #d2 = dict(selector="style", props=[('text-align', 'left')])
+        #new_phones_as_html = df.style.set_table_styles([d1, d2])\
+        #    .render()
             #.set_properties(**{'text-align': 'left', 'width':'10cm'})\
-        with open("new_phones_table.html", "w") as fp:
-            fp.write(new_phones_as_html)
 
+        #changes=find_changed_phones(self.phones, old_phones)
+        #df = pd.DataFrame(changes)
+        #changes_as_html = df.to_html(col_space=100, border=0)
+        #body = changes_as_html
+        #body += new_phones_as_html
         old_phones=load_phones()
-        changes=find_changed_phones(self.phones, old_phones)
-        df = pd.DataFrame(changes)
-        changes_as_html = df.to_html(col_space=100, border=0)
         all_phones = old_phones + self.phones
         save_phones(all_phones)
-        body = changes_as_html
-        body += new_phones_as_html
+        pa = PhoneAnalyzer(JSON_FILE, START_DATE)
+        dicts_for_pandas = pa.get_sorted_list_of_dicts()
+        ordered_columns = pa.get_ordered_columns()
+        df = pd.DataFrame(dicts_for_pandas)
+        df = df[ordered_columns]
+        df.index = df.index + 1
+
+        #Let's do some styling of the table
+        styles = [
+                dict(selector="th, td", props=[
+                        ("font-family", "Verdana"),
+                        ("font-size", "small"),
+                        ("font-weight", "normal"),
+                        ("text-align", "left"),
+                        #("background-color", "purple"),
+                        #("column-gap", "0px"),
+                        #("column-rule", "0px"),                    
+                        ]),
+                dict(selector="table", props=[
+                        ("border", "10px solid black"),                    
+                        ]),
+                dict(selector="th", props=[
+                        ("font-weight", "bold"),
+                        ("background-color", "orange"),
+                        ],),
+                dict(selector=".row_heading", props=[
+                        ("font-weight", "normal"),
+                        ("background-color", "transparent"),
+                        ],),
+                ]
+        html_table = "<html>"
+        html_table += df.style.set_table_styles(styles).render()
+        html_table = html_table.replace("<style", "<head><style")
+        html_table = html_table.replace("</style>", "</style></head>")
+        html_table += "</html>"
+
+        #Send html table as email
         send_email(
-                content=body, 
+                content=html_table, 
                 recipient="lars.hoyrup.jensen@gmail.com",
                 subject="CBB spider kørt {}".format(self.timestamp))
+        #Also write html table to file for inspection
+        with open("html_table.html", "w") as fp:
+            fp.write(html_table)
         
     def parse(self, response):
         #The Lua script below is used by parse_list_of_mobiles()
