@@ -104,7 +104,7 @@ def load_phones():
 def save_phones(phones):
     JSON_FILE="scraped_cbb_phones.json"
     with open(JSON_FILE, "w") as fp:
-        json.dump(phones, fp)
+        json.dump(phones, fp, indent=4)
         
 def normalise_unicode(text):
     if text is None:

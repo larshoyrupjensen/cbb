@@ -61,7 +61,7 @@ class MobilerSpider(scrapy.Spider):
         df = df[ordered_columns]
         df.index = df.index + 1
 
-        #Let's do some styling of the table
+        #Let's do some styling of the HTML table
         styles = [
                 dict(selector="", props=[
                         ("border-spacing", "0"),                    
