@@ -176,26 +176,21 @@ if __name__ == "__main__":
 
     #Let's do some styling of the table
     styles = [
-            dict(selector="th, td", props=[
-                    ("font-family", "Verdana"),
-                    ("font-size", "small"),
-                    ("font-weight", "normal"),
-                    ("text-align", "left"),
-                    #("background-color", "purple"),
-                    #("column-gap", "0px"),
-                    #("column-rule", "0px"),                    
-                    ]),
-            dict(selector="table", props=[
-                    ("border", "10px solid black"),                    
-                    ]),
-            dict(selector="th", props=[
-                    ("font-weight", "bold"),
-                    ("background-color", "orange"),
-                    ],),
-            dict(selector=".row_heading", props=[
-                    ("font-weight", "normal"),
-                    ("background-color", "transparent"),
-                    ],),
+                dict(selector="", props=[
+                        ("border-spacing", "0"),                    
+                        ("font-family", "Arial"),
+                        ("font-size", "small"),
+                        ("font-weight", "normal"),
+                        ("text-align", "left"),
+                        ]),
+                dict(selector="th", props=[
+                        ("font-weight", "bold"),
+                        ("background-color", "skyblue"),
+                        ],),
+                dict(selector=".row_heading", props=[
+                        ("font-weight", "normal"),
+                        ("background-color", "transparent"),
+                        ],),
             ]
     html_table = "<html>"
     html_table += df.style.set_table_styles(styles).render()

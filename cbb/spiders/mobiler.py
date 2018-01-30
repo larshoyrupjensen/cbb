@@ -63,21 +63,16 @@ class MobilerSpider(scrapy.Spider):
 
         #Let's do some styling of the table
         styles = [
-                dict(selector="th, td", props=[
-                        ("font-family", "Verdana"),
+                dict(selector="", props=[
+                        ("border-spacing", "0"),                    
+                        ("font-family", "Arial"),
                         ("font-size", "small"),
                         ("font-weight", "normal"),
                         ("text-align", "left"),
-                        #("background-color", "purple"),
-                        #("column-gap", "0px"),
-                        #("column-rule", "0px"),                    
-                        ]),
-                dict(selector="table", props=[
-                        ("border", "10px solid black"),                    
                         ]),
                 dict(selector="th", props=[
                         ("font-weight", "bold"),
-                        ("background-color", "orange"),
+                        ("background-color", "skyblue"),
                         ],),
                 dict(selector=".row_heading", props=[
                         ("font-weight", "normal"),
