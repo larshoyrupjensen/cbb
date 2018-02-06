@@ -12,6 +12,7 @@ import datetime
 import pandas as pd
 from cbb.spiders.tools import normalise_unicode
 import cbb.spiders.send_email
+import cbb.spiders.mobiler 
 
 JSON_FILE= "scraped_cbb_phones.json"
 START_DATE = datetime.datetime(year=2017, month=12, day=16)
@@ -174,31 +175,32 @@ if __name__ == "__main__":
     df = df[ordered_columns]
     df.index = df.index + 1
 
-    #Let's do some styling of the table
-    styles = [
-                dict(selector="", props=[
-                        ("border-spacing", "0"),                    
-                        ("font-family", "Arial"),
-                        ("font-size", "small"),
-                        ("font-weight", "normal"),
-                        ("text-align", "left"),
-                        ]),
-                dict(selector="th", props=[
-                        ("font-weight", "bold"),
-                        ("background-color", "skyblue"),
-                        ],),
-                dict(selector=".row_heading", props=[
-                        ("font-weight", "normal"),
-                        ("background-color", "transparent"),
-                        ],),
-            ]
-    html_table = "<html>"
-    html_table += df.style.format({"Price": "{:n}"}).\
-        bar(subset=["Price"], align="mid", color="orange").\
-        set_table_styles(styles).render()
-    html_table = html_table.replace("<style", "<head><style")
-    html_table = html_table.replace("</style>", "</style></head>")
-    html_table += "</html>"
+#    #Let's do some styling of the table
+#    styles = [
+#                dict(selector="", props=[
+#                        ("border-spacing", "0"),                    
+#                        ("font-family", "Arial"),
+#                        ("font-size", "small"),
+#                        ("font-weight", "normal"),
+#                        ("text-align", "left"),
+#                        ]),
+#                dict(selector="th", props=[
+#                        ("font-weight", "bold"),
+#                        ("background-color", "skyblue"),
+#                        ],),
+#                dict(selector=".row_heading", props=[
+#                        ("font-weight", "normal"),
+#                        ("background-color", "transparent"),
+#                        ],),
+#            ]
+#    html_table = "<html>"
+#    html_table += df.style.format({"Price": "{:n}"}).\
+#        bar(subset=["Price"], align="mid", color="orange").\
+#        set_table_styles(styles).render()
+#    html_table = html_table.replace("<style", "<head><style")
+#    html_table = html_table.replace("</style>", "</style></head>")
+#    html_table += "</html>"
+    html_table = cbb.spiders.mobiler.MobilerSpider.df_to_html(df)
     with open("html_table.html", "w") as fp:
         fp.write(html_table)
     #html_table = df.to_html(border=0)

@@ -8,10 +8,12 @@ from cbb.spiders.phones import PhoneAnalyzer
 import datetime
 import pandas as pd
 import unicodedata
+import locale
 
 JSON_FILE= "scraped_cbb_phones.json"
 START_DATE = datetime.datetime(year=2017, month=12, day=16)
 
+locale.setlocale(locale.LC_NUMERIC, "")
 
 class MobilerSpider(scrapy.Spider):
     name = 'mobiler'
@@ -45,32 +47,10 @@ class MobilerSpider(scrapy.Spider):
         df = pd.DataFrame(dicts_for_pandas)
         df = df[ordered_columns]
         df.index = df.index + 1
-
-        #Let's do some styling of the HTML table
-        styles = [
-                dict(selector="", props=[
-                        ("border-spacing", "0"),                    
-                        ("font-family", "Arial"),
-                        ("font-size", "small"),
-                        ("font-weight", "normal"),
-                        ("text-align", "left"),
-                        ]),
-                dict(selector="th", props=[
-                        ("font-weight", "bold"),
-                        ("background-color", "skyblue"),
-                        ],),
-                dict(selector=".row_heading", props=[
-                        ("font-weight", "normal"),
-                        ("background-color", "transparent"),
-                        ],),
-                ]
-        html_table = "<html>"
-        html_table += df.style.set_table_styles(styles).render()
-        html_table = html_table.replace("<style", "<head><style")
-        html_table = html_table.replace("</style>", "</style></head>")
-        html_table += "</html>"
+        
 
         #Send html table as email
+        html_table = self.df_to_html(df)
         send_email(
                 content=html_table, 
                 recipient="lars.hoyrup.jensen@gmail.com",
@@ -173,3 +153,38 @@ class MobilerSpider(scrapy.Spider):
                 phone_timestamp))
         self.phones.append(mobile)
 
+    @staticmethod
+    def df_to_html(df):
+        #Converts Pandas Dataframe to HTML and styles it    
+        #Also ensures <html> and <head> tags in HTML
+        
+        #First, remove None values from table
+        df.replace("None", "", inplace=True)
+        styles = [
+                dict(selector="", props=[
+                        ("border-spacing", "0"),                    
+                        ("font-family", "Arial"),
+                        ("font-size", "small"),
+                        ("font-weight", "normal"),
+                        ("text-align", "left"),
+                        ]),
+                dict(selector="th", props=[
+                        ("font-weight", "bold"),
+                        ("background-color", "skyblue"),
+                        ],),
+                dict(selector=".row_heading", props=[
+                        ("font-weight", "normal"),
+                        ("background-color", "transparent"),
+                        ],),
+                dict(selector="tr:hover",props=[
+                        ("background-color", "lightgrey")
+                        ],),
+                ]
+        html_table = "<html>"
+        html_table += df.style.format({"Price": "{:n}"}).\
+            bar(subset=["Price"], align="mid", color="orange").\
+            set_table_styles(styles).render()
+        html_table = html_table.replace("<style", "<head><style")
+        html_table = html_table.replace("</style>", "</style></head>")
+        html_table += "</html>"
+        return html_table
