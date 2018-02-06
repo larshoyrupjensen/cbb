@@ -36,21 +36,6 @@ class MobilerSpider(scrapy.Spider):
 
     def closed(self, spider):       
         #On shutdown, sort scraped phones by 1) brand, 2) model and 3) price
-        #self.phones = sorted(self.phones, 
-        #                     key = phone_sorter)
-
-        #df = pd.DataFrame(self.phones)
-        #d1 = dict(selector="th", props=[('text-align', 'left')])
-        #d2 = dict(selector="style", props=[('text-align', 'left')])
-        #new_phones_as_html = df.style.set_table_styles([d1, d2])\
-        #    .render()
-            #.set_properties(**{'text-align': 'left', 'width':'10cm'})\
-
-        #changes=find_changed_phones(self.phones, old_phones)
-        #df = pd.DataFrame(changes)
-        #changes_as_html = df.to_html(col_space=100, border=0)
-        #body = changes_as_html
-        #body += new_phones_as_html
         old_phones=load_phones()
         all_phones = old_phones + self.phones
         save_phones(all_phones)
