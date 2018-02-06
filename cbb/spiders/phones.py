@@ -193,7 +193,9 @@ if __name__ == "__main__":
                         ],),
             ]
     html_table = "<html>"
-    html_table += df.style.set_table_styles(styles).render()
+    html_table += df.style.format({"Price": "{:n}"}).\
+        bar(subset=["Price"], align="mid", color="orange").\
+        set_table_styles(styles).render()
     html_table = html_table.replace("<style", "<head><style")
     html_table = html_table.replace("</style>", "</style></head>")
     html_table += "</html>"
