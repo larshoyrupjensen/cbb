@@ -157,7 +157,7 @@ class MobilerSpider(scrapy.Spider):
         """
         Highlights price changes newer than x days
         """
-        is_new = pd.to_numeric(s) < 10
+        is_new = pd.to_numeric(s) < days
         return ["background-color: lightgreen" if v else "" for v in is_new]
 
     @classmethod
@@ -185,6 +185,9 @@ class MobilerSpider(scrapy.Spider):
                         ],),
                 dict(selector=".col7", props=[
                         ("text-align", "center"),
+                        ],),
+                dict(selector=".col8", props=[
+                        ("text-align", "right"),
                         ],),
                 dict(selector="tr:hover",props=[
                         ("background-color", "lightgrey")

@@ -102,10 +102,12 @@ class PhoneModel:
             self.latest_change_days_ago = \
                 (datetime.date.today() \
                 - next(iter(self.price_changes[-1].keys()))).days
-            self.latest_change_price = next(iter(self.price_changes[-1].values()))
+            price_change_num = next(
+                    iter(self.price_changes[-1].values()))
+            self.latest_change_price = f"{price_change_num:+n}"
         else:
             self.latest_change_days_ago = ""
-            self.latest_change_price = ""
+            self.latest_change_price =  ""
     
     def to_dicts(self):
         #Returns state of object in a dict for use in pandas HTML table
