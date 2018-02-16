@@ -56,7 +56,9 @@ class PhoneModel:
         self.phone_data.sort(key=lambda x: x.timestamp)
         #Now, find all price changes and append to self.price_changes
         for i in range(len(self.phone_data) - 1):
-            t = self.phone_data[i + 1].timestamp
+            t_string = self.phone_data[i + 1].timestamp
+            t = datetime.datetime.strptime(
+                    t_string, "%Y-%m-%d %H:%M:%S").date()
             delta = self.phone_data[i + 1].price - self.phone_data[i].price
             if delta != 0:
                 self.price_changes.append({t: delta})
@@ -78,12 +80,12 @@ class PhoneModel:
             #START_DATE. In the latter case, it remains None
             #End date remains None
             if model_datetimes_sorted[0].date() != START_DATE.date():
-                self.start_date = model_datetimes_sorted[0]
+                self.start_date = model_datetimes_sorted[0].date()
         else:
             #Phone is not active and end date is last registered date
             #Start date remains None
             self.is_active = False
-            self.end_date = model_datetimes_sorted[-1]
+            self.end_date = model_datetimes_sorted[-1].date()
     
     def set_price(self):
         #Finds most recent price and sets it as phone's price
@@ -96,6 +98,14 @@ class PhoneModel:
         self.set_price_changes()
         self.set_status_and_dates()
         self.set_price()
+        if self.price_changes != []:
+            self.latest_change_days_ago = \
+                (datetime.date.today() \
+                - next(iter(self.price_changes[-1].keys()))).days
+            self.latest_change_price = next(iter(self.price_changes[-1].values()))
+        else:
+            self.latest_change_days_ago = ""
+            self.latest_change_price = ""
     
     def to_dicts(self):
         #Returns state of object in a dict for use in pandas HTML table
@@ -106,7 +116,8 @@ class PhoneModel:
                 "Active": self.is_active,
                 "Entered list": str(self.start_date),
                 "Exited list": str(self.end_date),
-                "Latest price change": self.price_changes
+                "Latest change, date": self.latest_change_days_ago,
+                "Latest change, price": self.latest_change_price,
                 }
     
     def __repr__(self):
@@ -164,7 +175,8 @@ class PhoneAnalyzer():
                 "Active",
                 "Entered list",
                 "Exited list",
-                "Latest price change",
+                "Latest change, date",
+                "Latest change, price",
                 ]
 
 if __name__ == "__main__":

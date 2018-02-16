@@ -153,8 +153,15 @@ class MobilerSpider(scrapy.Spider):
                 phone_timestamp))
         self.phones.append(mobile)
 
-    @staticmethod
-    def df_to_html(df):
+    def highlight_new(s, days=7):
+        """
+        Highlights price changes newer than x days
+        """
+        is_new = pd.to_numeric(s) < 10
+        return ["background-color: lightgreen" if v else "" for v in is_new]
+
+    @classmethod
+    def df_to_html(cls, df):
         #Converts Pandas Dataframe to HTML and styles it    
         #Also ensures <html> and <head> tags in HTML
         
@@ -176,6 +183,9 @@ class MobilerSpider(scrapy.Spider):
                         ("font-weight", "normal"),
                         ("background-color", "transparent"),
                         ],),
+                dict(selector=".col7", props=[
+                        ("text-align", "center"),
+                        ],),
                 dict(selector="tr:hover",props=[
                         ("background-color", "lightgrey")
                         ],),
@@ -183,6 +193,7 @@ class MobilerSpider(scrapy.Spider):
         html_table = "<html>"
         html_table += df.style.format({"Price": "{:n}"}).\
             bar(subset=["Price"], align="mid", color="orange").\
+            apply(cls.highlight_new, days=10, subset="Latest change, date").\
             set_table_styles(styles).render()
         html_table = html_table.replace("<style", "<head><style")
         html_table = html_table.replace("</style>", "</style></head>")
