@@ -153,13 +153,20 @@ class MobilerSpider(scrapy.Spider):
                 phone_timestamp))
         self.phones.append(mobile)
 
-    def highlight_new(s, columns, days=7):
+    def highlight_new_row(s, columns, days=7):
         """
         Highlights entire rows with price changes newer than x days
         """
         is_new = pd.Series(data=False, index=s.index)
         is_new[columns] = pd.to_numeric(s.loc[columns]) < days
         return ["background-color: lightgreen" if is_new.any() else "" for v in is_new]
+
+    def highlight_new(s, days=7):
+        """
+        Highlights cell with price changes newer than x days
+        """
+        is_new = pd.to_numeric(s) < days
+        return ["background-color: lightgreen" if v else "" for v in is_new]
 
     def lowlight_inactive(s, columns):
         is_inactive = pd.Series(data=False, index=s.index)
@@ -205,12 +212,13 @@ class MobilerSpider(scrapy.Spider):
         html_table += df.style.format({"Price": "{:n}"}).\
             bar(subset=["Price"], align="mid", color="orange").\
             apply(cls.highlight_new, 
-                  days=11,
-                  columns=["Latest change, date",],
+                  days=12,
+                  subset=["Latest change, date",],
                   axis=1).\
-            apply(cls.lowlight_inactive, columns="Active", axis=1).\
             set_table_styles(styles).render()
         html_table = html_table.replace("<style", "<head><style")
         html_table = html_table.replace("</style>", "</style></head>")
         html_table += "</html>"
         return html_table
+
+#            apply(cls.lowlight_inactive, columns="Active", axis=1).\
