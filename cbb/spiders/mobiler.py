@@ -9,6 +9,7 @@ import datetime
 import pandas as pd
 import unicodedata
 import locale
+import socket
 
 JSON_FILE= "scraped_cbb_phones.json"
 START_DATE = datetime.datetime(year=2017, month=12, day=16)
@@ -19,7 +20,9 @@ class MobilerSpider(scrapy.Spider):
     name = 'mobiler'
     allowed_domains = ['cbb.dk']
     start_urls = ['https://www.cbb.dk/']
-    timestamp=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    date = datetime.date.today()
+    hostname = socket.gethostname()
     phones=[] #List to hold scraped phones
 
     def start_requests(self):
@@ -54,7 +57,10 @@ class MobilerSpider(scrapy.Spider):
         send_email(
                 content=html_table, 
                 recipient="lars.hoyrup.jensen@gmail.com",
-                subject="CBB spider kørt {}".format(self.timestamp))
+                subject="CBB spider kørt {} på {}".format(
+                        self.date,
+                        self.hostname,)
+                )
         #Also write html table to file for inspection
         with open("html_table.html", "w") as fp:
             fp.write(html_table)
@@ -173,6 +179,15 @@ class MobilerSpider(scrapy.Spider):
         is_inactive[columns] = pd.to_numeric(s.loc[columns]) == False
         return ["color: lightgrey" if is_inactive.any() else "" for v in is_inactive]
 
+    def highlight_recently_inactive(s, days=7, color="red"):
+        """
+        Higlights cells indicating that phone became inactive recently
+        """
+        td_days = pd.Timedelta(days, unit="d")
+        s = pd.to_datetime(s).dt.date
+        exited_recently = datetime.date.today() - s < td_days
+        return [f"background-color: {color}" if v else "" for v in exited_recently]
+    
     @classmethod
     def df_to_html(cls, df):
         #Converts Pandas Dataframe to HTML and styles it    
@@ -180,6 +195,8 @@ class MobilerSpider(scrapy.Spider):
         
         #First, remove None values from table
         df.replace("None", "", inplace=True)
+        
+        #Now, let's style the table
         styles = [
                 dict(selector="", props=[
                         ("border-spacing", "0"),                    
@@ -215,10 +232,17 @@ class MobilerSpider(scrapy.Spider):
                   days=12,
                   subset=["Latest change, date",],
                   axis=1).\
-            set_table_styles(styles).render()
+            apply(cls.highlight_recently_inactive,
+                  days=14,
+                  color="cyan",
+                  subset=["Exited list",],
+                  axis=1).\
+                  set_table_styles(styles).render()
         html_table = html_table.replace("<style", "<head><style")
         html_table = html_table.replace("</style>", "</style></head>")
         html_table += "</html>"
         return html_table
 
 #            apply(cls.lowlight_inactive, columns="Active", axis=1).\
+        
+
